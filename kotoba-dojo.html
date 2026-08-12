@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kotoba Dojo</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap');
+
+:root {
+  --paper: #F7F3E8;
+  --paper-2: #EFE8D8;
+  --ink: #1C1B19;
+  --ink-soft: #5A564C;
+  --seal: #B23A2E;
+  --seal-dim: #B23A2E22;
+  --indigo: #3D5A6C;
+  --gold: #B8935A;
+  --line: #DDD4BE;
+}
+
+* { box-sizing: border-box; }
+
+html, body { margin: 0; padding: 0; }
+
+.app {
+  min-height: 100vh;
+  background:
+    radial-gradient(ellipse at top left, #FBF8F0 0%, var(--paper) 55%),
+    repeating-linear-gradient(0deg, transparent 0 39px, #00000006 39px 40px);
+  color: var(--ink);
+  font-family: 'Zen Kaku Gothic New', system-ui, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 16px 40px;
+}
+
+.header { width: 100%; max-width: 480px; margin-bottom: 18px; }
+.brand { display: flex; align-items: center; gap: 14px; }
+.brand-mark {
+  font-family: 'Shippori Mincho', serif;
+  font-size: 40px;
+  font-weight: 700;
+  color: var(--paper);
+  background: var(--seal);
+  width: 56px; height: 56px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 4px;
+  flex-shrink: 0;
+  box-shadow: 0 3px 0 #7d281f;
+}
+.brand-text h1 {
+  font-family: 'Shippori Mincho', serif;
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 2px;
+  letter-spacing: 0.01em;
+}
+.brand-text p { margin: 0; font-size: 12.5px; color: var(--ink-soft); line-height: 1.4; }
+
+.deck-tabs {
+  width: 100%; max-width: 480px;
+  display: flex; gap: 8px;
+  margin-bottom: 12px;
+}
+.deck-tab {
+  flex: 1;
+  background: var(--paper-2);
+  border: 1px solid var(--line);
+  border-bottom: 3px solid var(--line);
+  border-radius: 8px 8px 4px 4px;
+  padding: 8px 6px 7px;
+  display: flex; flex-direction: column; align-items: center; gap: 1px;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--ink-soft);
+  transition: all .15s ease;
+}
+.deck-tab-sub { font-family: 'Shippori Mincho', serif; font-size: 14px; }
+.deck-tab-label { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; }
+.deck-tab.active {
+  background: var(--ink);
+  border-color: var(--ink);
+  border-bottom-color: var(--seal);
+  color: var(--paper);
+}
+
+.mode-row {
+  width: 100%; max-width: 480px;
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.mode-switch { display: flex; gap: 6px; }
+.mode-btn {
+  display: flex; align-items: center; gap: 5px;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 6px 12px;
+  font-size: 12.5px;
+  font-family: inherit;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: all .15s ease;
+}
+.mode-btn.active { background: var(--indigo); border-color: var(--indigo); color: var(--paper); }
+.mastered-pill {
+  font-size: 11.5px; color: var(--ink-soft);
+  background: var(--paper-2); border: 1px solid var(--line);
+  padding: 5px 10px; border-radius: 20px;
+}
+
+.main { width: 100%; max-width: 480px; display: flex; justify-content: center; }
+.stage { width: 100%; display: flex; flex-direction: column; align-items: center; }
+
+.stage-top {
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.deck-progress { font-size: 12px; color: var(--ink-soft); letter-spacing: 0.03em; }
+
+.seal { display: flex; align-items: center; }
+.seal-ring {
+  width: 34px; height: 34px; border-radius: 50%;
+  border: 2px solid var(--seal);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--seal); font-weight: 700; font-size: 13px;
+}
+
+/* FLASHCARD */
+.card {
+  width: 100%; aspect-ratio: 4/5; max-height: 380px;
+  perspective: 1200px;
+  cursor: pointer;
+  margin-bottom: 20px;
+}
+.card-inner {
+  position: relative; width: 100%; height: 100%;
+  transform-style: preserve-3d;
+  transition: transform .5s cubic-bezier(.4,.2,.2,1);
+  border-radius: 16px;
+}
+.card.flipped .card-inner { transform: rotateY(180deg); }
+.card-face {
+  position: absolute; inset: 0;
+  backface-visibility: hidden;
+  border-radius: 16px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  border: 1px solid var(--line);
+}
+.card-front {
+  background: linear-gradient(180deg, #FFFDF7, #F5EFE0);
+  box-shadow: 0 8px 24px -12px rgba(28,27,25,0.25), inset 0 0 0 1px #ffffff80;
+}
+.card-back {
+  background: var(--ink);
+  color: var(--paper);
+  transform: rotateY(180deg);
+  gap: 10px;
+}
+.glyph {
+  font-family: 'Shippori Mincho', serif;
+  font-size: 108px;
+  line-height: 1;
+  color: var(--ink);
+}
+.card-kanji .glyph { color: var(--seal); }
+.tap-hint { margin-top: 18px; font-size: 11px; color: var(--ink-soft); letter-spacing: 0.08em; text-transform: uppercase; }
+.reading { font-size: 30px; font-weight: 700; letter-spacing: 0.02em; }
+.meaning { font-size: 15px; color: #D9CBB0; }
+.glyph-small { font-family: 'Shippori Mincho', serif; font-size: 34px; margin-top: 6px; opacity: 0.6; }
+
+.judge-row { display: flex; gap: 10px; width: 100%; }
+.judge {
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 13px 10px; border-radius: 10px; border: none;
+  font-family: inherit; font-size: 13.5px; font-weight: 600;
+  cursor: pointer;
+}
+.judge.no { background: var(--paper-2); color: var(--ink-soft); border: 1px solid var(--line); }
+.judge.yes { background: var(--indigo); color: var(--paper); }
+.judge.yes:disabled { opacity: 0.4; cursor: default; }
+.judge:active { transform: scale(0.98); }
+
+/* QUIZ */
+.quiz-prompt {
+  display: flex; flex-direction: column; align-items: center;
+  background: linear-gradient(180deg, #FFFDF7, #F5EFE0);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 34px 20px;
+  width: 100%;
+  margin-bottom: 16px;
+  box-shadow: 0 8px 24px -12px rgba(28,27,25,0.2);
+}
+.glyph-quiz { font-family: 'Shippori Mincho', serif; font-size: 88px; color: var(--seal); line-height: 1; }
+.quiz-instruction { margin-top: 10px; font-size: 12px; color: var(--ink-soft); letter-spacing: 0.05em; }
+.choice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
+.choice {
+  background: var(--paper-2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px 8px;
+  display: flex; flex-direction: column; gap: 2px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.choice-reading { font-weight: 700; font-size: 16px; }
+.choice-meaning { font-size: 11.5px; color: var(--ink-soft); }
+.choice.correct { background: #33714433; border-color: #337144; }
+.choice.wrong { background: var(--seal-dim); border-color: var(--seal); }
+.quiz-score { font-size: 12px; color: var(--gold); font-weight: 600; }
+
+/* STROKE */
+.stroke-target { display: flex; align-items: center; gap: 8px; }
+.stroke-target-glyph { font-family: 'Shippori Mincho', serif; font-size: 22px; color: var(--seal); }
+.stroke-target-reading { font-size: 12px; color: var(--ink-soft); }
+
+.canvas-wrap {
+  position: relative;
+  width: 100%; aspect-ratio: 1/1; max-height: 340px;
+  background: #FFFDF7;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 14px;
+  touch-action: none;
+}
+.ghost-glyph {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Shippori Mincho', serif;
+  font-size: 200px;
+  color: var(--ink);
+  opacity: 0.08;
+  pointer-events: none;
+  user-select: none;
+}
+.grid-lines {
+  position: absolute; inset: 0;
+  background:
+    linear-gradient(#0000000f 1px, transparent 1px) 0 0 / 100% 50%,
+    linear-gradient(90deg, #0000000f 1px, transparent 1px) 0 0 / 50% 100%;
+  pointer-events: none;
+}
+.stroke-canvas { position: absolute; inset: 0; width: 100%; height: 100%; cursor: crosshair; }
+
+.stroke-controls { display: flex; gap: 10px; width: 100%; }
+.ghost-btn {
+  display: flex; align-items: center; gap: 6px;
+  background: transparent; border: 1px solid var(--line); color: var(--ink-soft);
+  border-radius: 10px; padding: 12px 16px; font-family: inherit; font-size: 13px; cursor: pointer;
+}
+.stroke-feedback { margin-top: 12px; font-size: 12.5px; text-align: center; }
+.stroke-feedback.good { color: #337144; }
+.stroke-feedback.light { color: var(--seal); }
+
+.footer { margin-top: 26px; font-size: 11px; color: var(--ink-soft); opacity: 0.7; }
+
+@media (prefers-reduced-motion: reduce) {
+  .card-inner { transition: none; }
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script>
+/* ---------------------------------------------------------
+   DATA
+--------------------------------------------------------- */
+
+const HIRAGANA = [
+  ["あ","a","-"],["い","i","-"],["う","u","-"],["え","e","-"],["お","o","-"],
+  ["か","ka","-"],["き","ki","-"],["く","ku","-"],["け","ke","-"],["こ","ko","-"],
+  ["さ","sa","-"],["し","shi","-"],["す","su","-"],["せ","se","-"],["そ","so","-"],
+  ["た","ta","-"],["ち","chi","-"],["つ","tsu","-"],["て","te","-"],["と","to","-"],
+  ["な","na","-"],["に","ni","-"],["ぬ","nu","-"],["ね","ne","-"],["の","no","-"],
+  ["は","ha","-"],["ひ","hi","-"],["ふ","fu","-"],["へ","he","-"],["ほ","ho","-"],
+  ["ま","ma","-"],["み","mi","-"],["む","mu","-"],["め","me","-"],["も","mo","-"],
+  ["や","ya","-"],["ゆ","yu","-"],["よ","yo","-"],
+  ["ら","ra","-"],["り","ri","-"],["る","ru","-"],["れ","re","-"],["ろ","ro","-"],
+  ["わ","wa","-"],["を","wo","-"],["ん","n","-"],
+];
+
+const KATAKANA = [
+  ["ア","a","-"],["イ","i","-"],["ウ","u","-"],["エ","e","-"],["オ","o","-"],
+  ["カ","ka","-"],["キ","ki","-"],["ク","ku","-"],["ケ","ke","-"],["コ","ko","-"],
+  ["サ","sa","-"],["シ","shi","-"],["ス","su","-"],["セ","se","-"],["ソ","so","-"],
+  ["タ","ta","-"],["チ","chi","-"],["ツ","tsu","-"],["テ","te","-"],["ト","to","-"],
+  ["ナ","na","-"],["ニ","ni","-"],["ヌ","nu","-"],["ネ","ne","-"],["ノ","no","-"],
+  ["ハ","ha","-"],["ヒ","hi","-"],["フ","fu","-"],["ヘ","he","-"],["ホ","ho","-"],
+  ["マ","ma","-"],["ミ","mi","-"],["ム","mu","-"],["メ","me","-"],["モ","mo","-"],
+  ["ヤ","ya","-"],["ユ","yu","-"],["ヨ","yo","-"],
+  ["ラ","ra","-"],["リ","ri","-"],["ル","ru","-"],["レ","re","-"],["ロ","ro","-"],
+  ["ワ","wa","-"],["ヲ","wo","-"],["ン","n","-"],
+];
+
+const KANJI = [
+  ["日","nichi / hi","sun, day"],["月","getsu / tsuki","moon, month"],["火","ka / hi","fire"],
+  ["水","sui / mizu","water"],["木","moku / ki","tree, wood"],["金","kin / kane","gold, money"],
+  ["土","do / tsuchi","earth, soil"],["人","jin / hito","person"],["山","san / yama","mountain"],
+  ["川","sen / kawa","river"],["田","den / ta","rice field"],["大","dai / ookii","big"],
+  ["小","shou / chiisai","small"],["中","chuu / naka","middle, inside"],["上","jou / ue","up, above"],
+  ["下","ka / shita","down, below"],["女","jo / onna","woman"],["子","shi / ko","child"],
+  ["王","ou","king"],["天","ten / ame","heaven, sky"],["石","seki / ishi","stone"],
+  ["花","ka / hana","flower"],["草","sou / kusa","grass"],["竹","chiku / take","bamboo"],
+  ["犬","ken / inu","dog"],["猫","byou / neko","cat"],["鳥","chou / tori","bird"],
+  ["魚","gyo / sakana","fish"],["雨","u / ame","rain"],["風","fuu / kaze","wind"],
+  ["空","kuu / sora","sky, empty"],["海","kai / umi","sea"],["林","rin / hayashi","woods"],
+  ["森","shin / mori","forest"],["学","gaku","study, learning"],["校","kou","school"],
+  ["先","sen / saki","before, ahead"],["生","sei / ikiru","life, birth"],["年","nen / toshi","year"],
+  ["本","hon / moto","book, origin"],["名","mei / na","name"],["力","ryoku / chikara","power"],
+  ["気","ki","spirit, energy"],["食","shoku / taberu","eat, food"],["飲","in / nomu","drink"],
+  ["行","kou / iku","go"],["来","rai / kuru","come"],["見","ken / miru","see"],
+  ["聞","bun / kiku","hear, ask"],["言","gen / iu","say"],["話","wa / hanasu","talk, speak"],
+];
+
+const DECKS = {
+  hiragana: { label: "Hiragana", sub: "ひらがな", data: HIRAGANA, tint: "kana" },
+  katakana: { label: "Katakana", sub: "カタカナ", data: KATAKANA, tint: "kana" },
+  kanji:    { label: "Kanji",    sub: "漢字",     data: KANJI,    tint: "kanji" },
+};
+
+/* ---------------------------------------------------------
+   UTIL
+--------------------------------------------------------- */
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function el(tag, attrs, ...children) {
+  const e = document.createElement(tag);
+  if (attrs) {
+    for (const [k, v] of Object.entries(attrs)) {
+      if (k === "class") e.className = v;
+      else if (k === "html") e.innerHTML = v;
+      else if (k.startsWith("on") && typeof v === "function") e.addEventListener(k.slice(2), v);
+      else if (v !== null && v !== undefined) e.setAttribute(k, v);
+    }
+  }
+  for (const c of children.flat()) {
+    if (c === null || c === undefined) continue;
+    e.appendChild(typeof c === "string" || typeof c === "number" ? document.createTextNode(c) : c);
+  }
+  return e;
+}
+
+/* in-memory progress store (persists for the session) */
+const progress = { streak: 0, known: {} };
+
+/* ---------------------------------------------------------
+   ICONS
+--------------------------------------------------------- */
+
+const ICONS = {
+  card: `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/></svg>`,
+  quiz: `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.7-2.2 2-2.2 3.6" stroke-linecap="round"/><circle cx="12" cy="16.6" r=".4" fill="currentColor"/></svg>`,
+  brush: `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 20c2-6 3-11 7-15 1.4-1.4 3.6-1.4 5 0s1.4 3.6 0 5c-4 4-9 5-15 7Z"/><path d="M14.5 6.5 17.5 9.5"/></svg>`,
+  refresh: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 5v6h-6"/></svg>`,
+  check: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>`,
+  x: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 5l14 14M19 5 5 19"/></svg>`,
+};
+
+function iconSpan(name) {
+  return el("span", { html: ICONS[name], style: "display:inline-flex;align-items:center;" });
+}
+
+/* ---------------------------------------------------------
+   SEAL / SCORE BADGE
+--------------------------------------------------------- */
+
+function SealBadge(streak) {
+  return el("div", { class: "seal", title: `Streak: ${streak}` },
+    el("div", { class: "seal-ring" },
+      el("span", { class: "seal-num" }, String(streak))
+    )
+  );
+}
+
+/* ---------------------------------------------------------
+   FLASHCARD MODE
+--------------------------------------------------------- */
+
+function FlashcardMode(container, deckKey, deck, bump) {
+  let order = shuffle(deck.data.map((_, i) => i));
+  let pos = 0;
+  let flipped = false;
+
+  function render() {
+    container.innerHTML = "";
+    const idx = order[pos];
+    const item = deck.data[idx];
+    const isKanji = deck.tint === "kanji";
+
+    const stage = el("div", { class: "stage" });
+
+    const stageTop = el("div", { class: "stage-top" },
+      el("div", { class: "deck-progress" }, `${pos + 1} / ${order.length}`),
+      SealBadge(progress.streak || 0)
+    );
+    stage.appendChild(stageTop);
+
+    const card = el("div", { class: `card ${isKanji ? "card-kanji" : "card-kana"} ${flipped ? "flipped" : ""}` });
+    card.addEventListener("click", () => { flipped = !flipped; render(); });
+
+    const cardInner = el("div", { class: "card-inner" },
+      el("div", { class: "card-face card-front" },
+        el("span", { class: "glyph" }, item[0]),
+        el("span", { class: "tap-hint" }, "tap to reveal")
+      ),
+      el("div", { class: "card-face card-back" },
+        el("span", { class: "reading" }, item[1]),
+        isKanji ? el("span", { class: "meaning" }, item[2]) : null,
+        el("span", { class: "glyph-small" }, item[0])
+      )
+    );
+    card.appendChild(cardInner);
+    stage.appendChild(card);
+
+    function next(known) {
+      bump(deckKey, item[0], known);
+      flipped = false;
+      setTimeout(() => {
+        pos = (pos + 1) % order.length;
+        render();
+      }, 140);
+    }
+
+    const judgeRow = el("div", { class: "judge-row" },
+      el("button", { class: "judge no", onclick: () => next(false) }, iconSpan("x"), " still learning"),
+      el("button", { class: "judge yes", onclick: () => next(true) }, iconSpan("check"), " got it")
+    );
+    stage.appendChild(judgeRow);
+
+    container.appendChild(stage);
+  }
+
+  render();
+}
+
+/* ---------------------------------------------------------
+   QUIZ MODE
+--------------------------------------------------------- */
+
+function QuizMode(container, deckKey, deck, bump) {
+  let order = shuffle(deck.data.map((_, i) => i));
+  let pos = 0;
+  let choices = [];
+  let picked = null;
+  let correctCount = 0;
+
+  function buildChoices(qIdx) {
+    const correct = deck.data[qIdx];
+    const pool = deck.data.filter((_, i) => i !== qIdx);
+    const wrongs = shuffle(pool).slice(0, 3);
+    choices = shuffle([correct, ...wrongs]);
+  }
+  buildChoices(order[0]);
+
+  function render() {
+    container.innerHTML = "";
+    const idx = order[pos];
+    const item = deck.data[idx];
+
+    const stage = el("div", { class: "stage" });
+
+    stage.appendChild(el("div", { class: "stage-top" },
+      el("div", { class: "deck-progress" }, `${pos + 1} / ${order.length}`),
+      el("div", { class: "quiz-score" }, `${correctCount} correct`)
+    ));
+
+    stage.appendChild(el("div", { class: "quiz-prompt" },
+      el("span", { class: "glyph glyph-quiz" }, item[0]),
+      el("span", { class: "quiz-instruction" }, "what does this say?")
+    ));
+
+    function choose(c) {
+      if (picked) return;
+      picked = c;
+      const isRight = c[0] === item[0];
+      if (isRight) correctCount += 1;
+      bump(deckKey, item[0], isRight);
+      render();
+      setTimeout(() => {
+        const nextPos = (pos + 1) % order.length;
+        pos = nextPos;
+        picked = null;
+        buildChoices(order[nextPos]);
+        render();
+      }, 700);
+    }
+
+    const grid = el("div", { class: "choice-grid" });
+    choices.forEach((c) => {
+      let state = "";
+      if (picked) {
+        if (c[0] === item[0]) state = "correct";
+        else if (c === picked) state = "wrong";
+      }
+      const btn = el("button", { class: `choice ${state}`, onclick: () => choose(c) },
+        el("span", { class: "choice-reading" }, c[1]),
+        deck.tint === "kanji" ? el("span", { class: "choice-meaning" }, c[2]) : null
+      );
+      if (picked) btn.disabled = true;
+      grid.appendChild(btn);
+    });
+    stage.appendChild(grid);
+
+    container.appendChild(stage);
+  }
+
+  render();
+}
+
+/* ---------------------------------------------------------
+   STROKE PRACTICE MODE
+--------------------------------------------------------- */
+
+function StrokeMode(container, deckKey, deck, bump) {
+  let order = shuffle(deck.data.map((_, i) => i));
+  let pos = 0;
+  let hasDrawn = false;
+  let scored = null;
+  let canvas, ctx, drawing = false;
+
+  function setupCanvas() {
+    if (!canvas) return;
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx = canvas.getContext("2d");
+    ctx.scale(dpr, dpr);
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.lineWidth = 10;
+    ctx.strokeStyle = "#B23A2E";
+  }
+
+  function clearCanvas() {
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    ctx.clearRect(0, 0, rect.width, rect.height);
+    hasDrawn = false;
+    scored = null;
+    renderControls();
+  }
+
+  function getPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const t = e.touches ? e.touches[0] : e;
+    return { x: t.clientX - rect.left, y: t.clientY - rect.top };
+  }
+
+  function start(e) {
+    e.preventDefault();
+    drawing = true;
+    hasDrawn = true;
+    const { x, y } = getPos(e);
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    renderControls();
+  }
+  function move(e) {
+    if (!drawing) return;
+    e.preventDefault();
+    const { x, y } = getPos(e);
+    ctx.lineTo(x, y);
+    ctx.stroke();
+  }
+  function end() { drawing = false; }
+
+  function finish() {
+    const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    let inked = 0;
+    for (let i = 3; i < img.data.length; i += 4) {
+      if (img.data[i] > 10) inked++;
+    }
+    const coverage = inked / (canvas.width * canvas.height);
+    const good = coverage > 0.01;
+    scored = good ? "good" : "light";
+    const idx = order[pos];
+    const item = deck.data[idx];
+    bump(deckKey, item[0], good);
+    renderFeedback();
+    renderControls();
+  }
+
+  function nextChar() {
+    pos = (pos + 1) % order.length;
+    render();
+  }
+
+  let stageTop, controlsWrap, feedbackWrap;
+
+  function renderControls() {
+    controlsWrap.innerHTML = "";
+    controlsWrap.appendChild(
+      el("button", { class: "ghost-btn", onclick: clearCanvas }, iconSpan("refresh"), " clear")
+    );
+    if (!scored) {
+      const btn = el("button", { class: "judge yes", onclick: finish }, iconSpan("check"), " check my stroke");
+      if (!hasDrawn) btn.disabled = true;
+      controlsWrap.appendChild(btn);
+    } else {
+      controlsWrap.appendChild(
+        el("button", { class: "judge yes", onclick: nextChar }, "next character →")
+      );
+    }
+  }
+
+  function renderFeedback() {
+    feedbackWrap.innerHTML = "";
+    if (scored === "good") {
+      feedbackWrap.appendChild(el("div", { class: "stroke-feedback good" }, "nicely traced — logged as practiced."));
+    } else if (scored === "light") {
+      feedbackWrap.appendChild(el("div", { class: "stroke-feedback light" }, "try tracing more of the shape before moving on."));
+    }
+  }
+
+  function render() {
+    container.innerHTML = "";
+    hasDrawn = false;
+    scored = null;
+    const idx = order[pos];
+    const item = deck.data[idx];
+
+    const stage = el("div", { class: "stage" });
+
+    stageTop = el("div", { class: "stage-top" },
+      el("div", { class: "deck-progress" }, `${pos + 1} / ${order.length}`),
+      el("div", { class: "stroke-target" },
+        el("span", { class: "stroke-target-glyph" }, item[0]),
+        el("span", { class: "stroke-target-reading" }, item[1] + (deck.tint === "kanji" ? ` · ${item[2]}` : ""))
+      )
+    );
+    stage.appendChild(stageTop);
+
+    const canvasWrap = el("div", { class: "canvas-wrap" },
+      el("div", { class: "ghost-glyph" }, item[0]),
+      el("div", { class: "grid-lines" })
+    );
+    canvas = el("canvas", { class: "stroke-canvas" });
+    canvas.addEventListener("mousedown", start);
+    canvas.addEventListener("mousemove", move);
+    canvas.addEventListener("mouseup", end);
+    canvas.addEventListener("mouseleave", end);
+    canvas.addEventListener("touchstart", start, { passive: false });
+    canvas.addEventListener("touchmove", move, { passive: false });
+    canvas.addEventListener("touchend", end);
+    canvasWrap.appendChild(canvas);
+    stage.appendChild(canvasWrap);
+
+    controlsWrap = el("div", { class: "stroke-controls" });
+    stage.appendChild(controlsWrap);
+
+    feedbackWrap = el("div", {});
+    stage.appendChild(feedbackWrap);
+
+    container.appendChild(stage);
+
+    setupCanvas();
+    renderControls();
+  }
+
+  window.addEventListener("resize", () => { if (canvas) setupCanvas(); });
+
+  render();
+}
+
+/* ---------------------------------------------------------
+   APP SHELL
+--------------------------------------------------------- */
+
+function App(root) {
+  let deckKey = "hiragana";
+  let mode = "cards";
+
+  function bump(dk, glyph, known) {
+    const key = `${dk}:${glyph}`;
+    progress.known[key] = known;
+    progress.streak = known ? (progress.streak || 0) + 1 : 0;
+  }
+
+  function masteredCount() {
+    return Object.entries(progress.known || {}).filter(([k, v]) => k.startsWith(deckKey + ":") && v).length;
+  }
+
+  function render() {
+    root.innerHTML = "";
+    const deck = DECKS[deckKey];
+
+    const app = el("div", { class: "app" });
+
+    // header
+    app.appendChild(
+      el("header", { class: "header" },
+        el("div", { class: "brand" },
+          el("span", { class: "brand-mark" }, "文"),
+          el("div", { class: "brand-text" },
+            el("h1", {}, "Kotoba Dojo"),
+            el("p", {}, "a quiet stroke-by-stroke way through hiragana, katakana & kanji")
+          )
+        )
+      )
+    );
+
+    // deck tabs
+    const tabs = el("nav", { class: "deck-tabs", role: "tablist", "aria-label": "Character set" });
+    Object.entries(DECKS).forEach(([k, d]) => {
+      const tab = el("button", {
+        role: "tab",
+        "aria-selected": String(deckKey === k),
+        class: `deck-tab ${deckKey === k ? "active" : ""}`,
+        onclick: () => { deckKey = k; render(); }
+      },
+        el("span", { class: "deck-tab-sub" }, d.sub),
+        el("span", { class: "deck-tab-label" }, d.label)
+      );
+      tabs.appendChild(tab);
+    });
+    app.appendChild(tabs);
+
+    // mode row
+    const modeSwitch = el("div", { class: "mode-switch", role: "tablist", "aria-label": "Practice mode" },
+      el("button", { class: `mode-btn ${mode === "cards" ? "active" : ""}`, onclick: () => { mode = "cards"; render(); } }, iconSpan("card"), " Flashcards"),
+      el("button", { class: `mode-btn ${mode === "quiz" ? "active" : ""}`, onclick: () => { mode = "quiz"; render(); } }, iconSpan("quiz"), " Quiz"),
+      el("button", { class: `mode-btn ${mode === "stroke" ? "active" : ""}`, onclick: () => { mode = "stroke"; render(); } }, iconSpan("brush"), " Stroke")
+    );
+    app.appendChild(
+      el("div", { class: "mode-row" },
+        modeSwitch,
+        el("div", { class: "mastered-pill" }, `${masteredCount()} mastered in ${deck.label}`)
+      )
+    );
+
+    // main
+    const main = el("main", { class: "main" });
+    app.appendChild(main);
+
+    // footer
+    app.appendChild(el("footer", { class: "footer" }, "progress saves automatically on this device"));
+
+    root.appendChild(app);
+
+    if (mode === "cards") FlashcardMode(main, deckKey, deck, bump);
+    if (mode === "quiz") QuizMode(main, deckKey, deck, bump);
+    if (mode === "stroke") StrokeMode(main, deckKey, deck, bump);
+  }
+
+  render();
+}
+
+App(document.getElementById("root"));
+</script>
+</body>
+</html>
